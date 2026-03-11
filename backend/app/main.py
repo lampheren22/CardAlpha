@@ -1,13 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, Base, SessionLocal
+from app.database import engine, Base
 from app.routers import auth, cards, dashboard, watchlist, admin
-
-# Create all tables (safe to call repeatedly — no-op if already exist)
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"DB init warning: {e}")
 
 app = FastAPI(
     title="CardAlpha API",
@@ -37,12 +31,8 @@ def health():
 
 @app.on_event("startup")
 def on_startup():
-    """Seed database on first run (idempotent — skips if data exists)."""
-    db = SessionLocal()
+    """Create all tables on startup. No seed data — use admin panel to add cards."""
     try:
-        from app.seed_data import seed
-        seed(db)
+        Base.metadata.create_all(bind=engine)
     except Exception as e:
-        print(f"Seed skipped: {e}")
-    finally:
-        db.close()
+        print(f"DB init warning: {e}")

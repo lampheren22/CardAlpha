@@ -98,8 +98,15 @@ export default function DashboardTabs({ onSelectCard, sportFilter, filters }: Pr
       <div className="p-4">
         <h3 className="text-white font-semibold mb-4">{TABLE_LABELS[activeTab]}</h3>
         {isLoading ? (
-          <div className="flex items-center justify-center h-48 text-gray-500 text-sm">
-            Loading…
+          <div className="flex items-center justify-center h-48 text-gray-500 text-sm">Loading…</div>
+        ) : currentData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-48 text-center gap-2">
+            <p className="text-gray-400 font-medium">No cards yet</p>
+            <p className="text-gray-600 text-sm">
+              Add cards via the{' '}
+              <a href="/admin" className="text-alpha-green hover:underline">Admin panel</a>{' '}
+              to populate this view.
+            </p>
           </div>
         ) : (
           <CardTable cards={currentData} onSelectCard={onSelectCard} />
