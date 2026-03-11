@@ -13,13 +13,24 @@ DATABASE_URL = (
     or "postgresql://postgres:postgres@localhost:5432/cardalpha"
 )
 
-# Neon requires SSL — ensure it's in the URL and pass connect_args
-if "neon.tech" in DATABASE_URL and "sslmode" not in DATABASE_URL:
-    DATABASE_URL += "?sslmode=require"
+# SQLAlchemy requires "postgresql://" not "postgres://"
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-connect_args = {"sslmode": "require"} if "neon.tech" in DATABASE_URL else {}
+# Neon requires SSL
+connect_args = {}
+if "neon.tech" in DATABASE_URL:
+    if "sslmode" not in DATABASE_URL:
+        DATABASE_URL += "?sslmode=require"
+    connect_args = {"sslmode": "require"}
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+engine = create_engine(
+    DATABASE_URL,
+    connect_args=connect_args,
+    pool_pre_ping=True,        # detect stale connections
+    pool_size=1,               # serverless: keep pool small
+    max_overflow=0,
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
