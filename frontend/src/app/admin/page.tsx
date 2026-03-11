@@ -461,10 +461,24 @@ export default function AdminPage() {
         <div className="bg-alpha-card border border-alpha-border rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-alpha-border">
             <h2 className="text-white font-semibold">Card Database</h2>
-            <button onClick={() => { setEditCard(null); setShowForm(true) }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-alpha-green text-black font-semibold text-sm hover:bg-alpha-green/90 transition-colors">
-              <Plus size={14} /> Add Card
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const r = await adminFetch('/admin/seed-defaults', { method: 'POST' })
+                    refresh()
+                    alert(`Loaded ${r.added} cards (${r.skipped} already existed)`)
+                  } catch (e: any) { alert(e.message) }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-alpha-green/40 text-alpha-green text-sm hover:bg-alpha-green/10 transition-colors"
+              >
+                Load Default Cards
+              </button>
+              <button onClick={() => { setEditCard(null); setShowForm(true) }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-alpha-green text-black font-semibold text-sm hover:bg-alpha-green/90 transition-colors">
+                <Plus size={14} /> Add Card
+              </button>
+            </div>
           </div>
 
           {isLoading ? (

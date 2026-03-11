@@ -2,12 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ScanLine, Eye, Settings } from 'lucide-react'
+import { LayoutDashboard, Eye, Settings } from 'lucide-react'
 import clsx from 'clsx'
 
 const nav = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/scanner', label: 'Card Scanner', icon: ScanLine },
   { href: '/watchlist', label: 'Watchlist', icon: Eye },
   { href: '/admin', label: 'Admin', icon: Settings },
 ]

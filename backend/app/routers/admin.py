@@ -247,6 +247,54 @@ def update_scoring_weights(
     return SCORING_WEIGHTS
 
 
+# ── Seed defaults ─────────────────────────────────────────────────────
+
+@router.post("/seed-defaults")
+def seed_default_cards(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user),
+):
+    """Load the curated default card list. Skips cards that already exist."""
+    from app.default_cards import DEFAULT_CARDS
+    from datetime import datetime
+
+    added = 0
+    skipped = 0
+
+    for entry in DEFAULT_CARDS:
+        cd = entry["card"]
+        md_data = entry["market"]
+
+        existing = (
+            db.query(Card)
+            .filter(
+                Card.player_name == cd["player_name"],
+                Card.set_name == cd["set_name"],
+                Card.parallel_type == cd.get("parallel_type"),
+            )
+            .first()
+        )
+        if existing:
+            skipped += 1
+            continue
+
+        card = Card(**cd)
+        db.add(card)
+        db.flush()
+
+        md = MarketData(
+            card_id=card.id,
+            price_history=[],
+            last_updated=datetime.utcnow(),
+            **md_data,
+        )
+        db.add(md)
+        added += 1
+
+    db.commit()
+    return {"added": added, "skipped": skipped, "total": added + skipped}
+
+
 # ── Stats ─────────────────────────────────────────────────────────────
 
 @router.get("/stats")
