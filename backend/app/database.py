@@ -13,7 +13,13 @@ DATABASE_URL = (
     or "postgresql://postgres:postgres@localhost:5432/cardalpha"
 )
 
-engine = create_engine(DATABASE_URL)
+# Neon requires SSL — ensure it's in the URL and pass connect_args
+if "neon.tech" in DATABASE_URL and "sslmode" not in DATABASE_URL:
+    DATABASE_URL += "?sslmode=require"
+
+connect_args = {"sslmode": "require"} if "neon.tech" in DATABASE_URL else {}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
