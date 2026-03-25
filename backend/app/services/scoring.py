@@ -17,6 +17,30 @@ POPULAR_SETS = {
 }
 
 
+def _performance_momentum_score(market_data) -> float:
+    """
+    Uses recent price trend as a proxy for player performance momentum.
+    Maps -20%..+20% price change over last 14 days → 0..5 pts.
+    Replace with a real stats API when available.
+    """
+    if not market_data or not market_data.price_history:
+        return 2.5
+    history = sorted(market_data.price_history, key=lambda x: x.get("date", ""))
+    if len(history) < 14:
+        return 2.5
+    recent_7 = [p["price"] for p in history[-7:] if "price" in p]
+    prior_7 = [p["price"] for p in history[-14:-7] if "price" in p]
+    if not recent_7 or not prior_7:
+        return 2.5
+    recent_avg = sum(recent_7) / len(recent_7)
+    prior_avg = sum(prior_7) / len(prior_7)
+    if prior_avg == 0:
+        return 2.5
+    pct_change = (recent_avg - prior_avg) / prior_avg
+    # +20% change → 5 pts, flat → 2.5 pts, -20% → 0 pts
+    return min(5.0, max(0.0, 2.5 + pct_change * 12.5))
+
+
 def _set_popularity_score(set_name: str) -> float:
     name_lower = set_name.lower()
     for key, score in POPULAR_SETS.items():
@@ -133,9 +157,9 @@ def calculate_alpha_score(card, market_data) -> dict:
         "value": sn,
     }
 
-    # 7. Performance momentum (max 5) — placeholder until real stats API
-    score_perf = 4.3
-    breakdown["performance_momentum"] = {"score": score_perf, "max": 5}
+    # 7. Performance momentum (max 5) — price-trend proxy until real stats API
+    score_perf = _performance_momentum_score(market_data)
+    breakdown["performance_momentum"] = {"score": round(score_perf, 1), "max": 5}
 
     # 8. Set popularity (max 5)
     score_set = _set_popularity_score(card.set_name)

@@ -79,6 +79,12 @@ export async function getPokemonMovers(): Promise<CardListItem[]> {
 
 // ── Cards ─────────────────────────────────────────────────────────────
 
+export async function searchCards(query: string): Promise<CardListItem[]> {
+  if (!query || query.trim().length < 2) return []
+  const params = new URLSearchParams({ search: query.trim(), limit: '50' })
+  return apiFetch<CardListItem[]>(`/cards?${params}`)
+}
+
 export async function getCards(filters?: Filters): Promise<CardListItem[]> {
   const params = new URLSearchParams()
   if (filters) {

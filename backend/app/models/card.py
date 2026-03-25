@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 
@@ -22,3 +23,5 @@ class Card(Base):
     image_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    sales = relationship("Sale", back_populates="card", passive_deletes=True)

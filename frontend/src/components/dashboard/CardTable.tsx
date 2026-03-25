@@ -11,7 +11,7 @@ interface Props {
   onSelectCard: (card: CardListItem) => void
 }
 
-type SortKey = 'player_name' | 'current_price' | 'alpha_score' | 'estimated_roi' | 'sell_through_rate'
+type SortKey = 'player_name' | 'current_price' | 'alpha_score' | 'estimated_roi' | 'sell_through_rate' | 'liquidity_numeric'
 
 const REC_STYLES: Record<string, string> = {
   'Strong Buy': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -24,6 +24,12 @@ const RISK_STYLES: Record<string, string> = {
   Low: 'text-emerald-400',
   Medium: 'text-yellow-400',
   High: 'text-alpha-red',
+}
+
+const LIQUIDITY_STYLES: Record<string, string> = {
+  High: 'text-emerald-400 bg-emerald-900/30 border-emerald-700/30',
+  Medium: 'text-yellow-400 bg-yellow-900/30 border-yellow-700/30',
+  Low: 'text-red-400 bg-red-900/30 border-red-700/30',
 }
 
 export default function CardTable({ cards, onSelectCard }: Props) {
@@ -81,6 +87,7 @@ export default function CardTable({ cards, onSelectCard }: Props) {
             <ColHeader k="estimated_roi" label="Est. ROI" />
             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Risk</th>
             <ColHeader k="sell_through_rate" label="Sell-Through" className="min-w-[120px]" />
+            <ColHeader k="liquidity_numeric" label="Liquidity" className="min-w-[100px]" />
           </tr>
         </thead>
         <tbody>
@@ -189,6 +196,29 @@ export default function CardTable({ cards, onSelectCard }: Props) {
                       {card.sell_through_rate?.toFixed(0)}%
                     </span>
                   </div>
+                </td>
+
+                {/* Liquidity */}
+                <td className="px-3 py-3">
+                  {card.liquidity_score ? (
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={clsx(
+                          'px-2 py-0.5 rounded text-[10px] font-semibold border w-fit',
+                          LIQUIDITY_STYLES[card.liquidity_score] || 'text-gray-400 bg-gray-900/30 border-gray-700/30'
+                        )}
+                      >
+                        {card.liquidity_score}
+                      </span>
+                      {card.reasoning && (
+                        <span className="text-gray-500 text-[10px] leading-tight max-w-[140px] truncate" title={card.reasoning}>
+                          {card.reasoning}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-gray-600 text-xs">—</span>
+                  )}
                 </td>
               </tr>
             )

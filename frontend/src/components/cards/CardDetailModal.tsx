@@ -154,7 +154,7 @@ export default function CardDetailModal({ card, onClose, onWatchlist }: Props) {
               <div className="h-40 flex items-center justify-center text-gray-500 text-sm">Loading chart…</div>
             ) : detail?.market_data.price_history.length ? (
               <div>
-                <p className="text-xs text-gray-400 mb-2">90-Day Price History</p>
+                <p className="text-xs text-gray-400 mb-2">Price History</p>
                 <PriceChart data={detail.market_data.price_history} />
               </div>
             ) : null}
@@ -217,6 +217,52 @@ export default function CardDetailModal({ card, onClose, onWatchlist }: Props) {
                   Alpha Score Breakdown
                 </p>
                 <AlphaScoreBreakdown data={detail.alpha_score} />
+              </div>
+            )}
+
+            <div className="border-t border-alpha-border" />
+
+            {/* Liquidity */}
+            {detail?.liquidity && (
+              <div>
+                <p className="text-[10px] font-bold tracking-widest text-gray-500 uppercase mb-3">
+                  Liquidity
+                </p>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Rating</span>
+                    <span className={clsx(
+                      'px-2 py-0.5 rounded text-xs font-semibold border',
+                      detail.liquidity.liquidity_score === 'High' && 'text-emerald-400 bg-emerald-900/30 border-emerald-700/30',
+                      detail.liquidity.liquidity_score === 'Medium' && 'text-yellow-400 bg-yellow-900/30 border-yellow-700/30',
+                      detail.liquidity.liquidity_score === 'Low' && 'text-red-400 bg-red-900/30 border-red-700/30',
+                    )}>
+                      {detail.liquidity.liquidity_score}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Score</span>
+                    <span className="text-white">{detail.liquidity.liquidity_numeric}/100</span>
+                  </div>
+                  {detail.liquidity.sales_30d > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Sales (30D)</span>
+                      <span className="text-white">{detail.liquidity.sales_30d}</span>
+                    </div>
+                  )}
+                  {detail.liquidity.avg_days_to_sell != null && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Avg Days to Sell</span>
+                      <span className="text-white">{detail.liquidity.avg_days_to_sell?.toFixed(1)}</span>
+                    </div>
+                  )}
+                  {detail.liquidity.buy_box && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Buy Box</span>
+                      <span className="text-emerald-400 font-medium">Yes ✓</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

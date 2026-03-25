@@ -74,6 +74,7 @@ export interface CardDetail {
   market_data: MarketData
   alpha_score: AlphaScoreBreakdown
   projection: Projection
+  liquidity?: LiquidityDetail
 }
 
 export interface CardListItem extends Card {
@@ -85,6 +86,18 @@ export interface CardListItem extends Card {
   estimated_roi: number
   risk_rating: string
   sell_through_rate: number
+  liquidity_score?: string
+  liquidity_numeric?: number
+  reasoning?: string
+}
+
+export interface LiquidityDetail {
+  liquidity_score: string
+  liquidity_numeric: number
+  avg_days_to_sell?: number
+  sales_per_week?: number
+  sales_30d: number
+  buy_box: boolean
 }
 
 export interface DashboardSummary {

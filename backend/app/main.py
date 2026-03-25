@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.routers import auth, cards, dashboard, watchlist, admin
+# Import models so Base.metadata includes them for create_all
+from app.models import card, user, market_data, watchlist as watchlist_model, sale  # noqa: F401
 
 app = FastAPI(
     title="CardAlpha API",

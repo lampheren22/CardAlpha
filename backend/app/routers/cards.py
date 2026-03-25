@@ -14,12 +14,41 @@ from app.schemas.card import (
     MarketDataResponse,
     AlphaScoreBreakdown,
     ProjectionResponse,
+    LiquidityResponse,
 )
 from app.auth import get_current_admin_user, get_current_user
 from app.services.scoring import calculate_alpha_score
 from app.services.projection import calculate_projection
+from app.services.liquidity import calculate_liquidity
+from sqlalchemy import or_
 
 router = APIRouter(prefix="/cards", tags=["cards"])
+
+
+def _build_reasoning(card, md, alpha: dict) -> str:
+    """Generate a human-readable buy-signal explanation from card/market data."""
+    reasons = []
+    if md.price_90d_avg and md.price_90d_avg > 0 and md.current_price < md.price_90d_avg * 0.95:
+        pct = (md.price_90d_avg - md.current_price) / md.price_90d_avg * 100
+        reasons.append(f"{pct:.0f}% below 90D avg")
+    if md.price_30d_avg and md.price_30d_avg > 0 and md.current_price < md.price_30d_avg * 0.95:
+        pct = (md.price_30d_avg - md.current_price) / md.price_30d_avg * 100
+        reasons.append(f"{pct:.0f}% below 30D avg")
+    prior_7d = max((md.sales_volume_14d or 0) - (md.sales_volume_7d or 0), 0)
+    if prior_7d > 0 and (md.sales_volume_7d or 0) > prior_7d * 1.25:
+        pct = ((md.sales_volume_7d or 0) - prior_7d) / prior_7d * 100
+        reasons.append(f"+{pct:.0f}% volume spike")
+    if card.is_rookie:
+        reasons.append("Rookie card")
+    if card.population is not None and card.population < 50:
+        reasons.append(f"Low pop ({card.population})")
+    if card.serial_number is not None and card.serial_number <= 25:
+        reasons.append(f"Serial /{card.serial_number}")
+    if md.price_ath and md.price_ath > 0:
+        pct_vs_ath = (md.price_ath - md.current_price) / md.price_ath * 100
+        if pct_vs_ath >= 40:
+            reasons.append(f"{pct_vs_ath:.0f}% below ATH")
+    return " · ".join(reasons) if reasons else None
 
 
 def _enrich_card(card: Card, md: Optional[MarketData]) -> dict:
@@ -44,6 +73,7 @@ def _enrich_card(card: Card, md: Optional[MarketData]) -> dict:
     if md:
         alpha = calculate_alpha_score(card, md)
         proj = calculate_projection(card, md, alpha)
+        liq = calculate_liquidity(md)
         pct_vs_90d = 0.0
         if md.price_90d_avg and md.price_90d_avg > 0:
             pct_vs_90d = ((md.current_price - md.price_90d_avg) / md.price_90d_avg) * 100
@@ -57,6 +87,9 @@ def _enrich_card(card: Card, md: Optional[MarketData]) -> dict:
                 "estimated_roi": proj["estimated_roi"],
                 "risk_rating": proj["risk_rating"],
                 "sell_through_rate": md.sell_through_rate,
+                "liquidity_score": liq["liquidity_score"],
+                "liquidity_numeric": liq["liquidity_numeric"],
+                "reasoning": _build_reasoning(card, md, alpha),
             }
         )
     return data
@@ -64,6 +97,7 @@ def _enrich_card(card: Card, md: Optional[MarketData]) -> dict:
 
 @router.get("", response_model=List[CardResponse])
 def list_cards(
+    search: Optional[str] = None,
     sport: Optional[str] = None,
     is_rookie: Optional[bool] = None,
     min_alpha_score: Optional[int] = None,
@@ -79,6 +113,15 @@ def list_cards(
     db: Session = Depends(get_db),
 ):
     query = db.query(Card)
+    if search:
+        term = f"%{search}%"
+        query = query.filter(
+            or_(
+                Card.player_name.ilike(term),
+                Card.set_name.ilike(term),
+                Card.parallel_type.ilike(term),
+            )
+        )
     if sport:
         query = query.filter(Card.sport == sport)
     if is_rookie is not None:
@@ -124,6 +167,7 @@ def get_card(card_id: int, db: Session = Depends(get_db)):
     md = db.query(MarketData).filter(MarketData.card_id == card_id).first()
     alpha = calculate_alpha_score(card, md) if md else None
     proj = calculate_projection(card, md, alpha) if md and alpha else None
+    liq = calculate_liquidity(md) if md else None
 
     card_data = _enrich_card(card, md)
 
@@ -132,6 +176,7 @@ def get_card(card_id: int, db: Session = Depends(get_db)):
         "market_data": md,
         "alpha_score": alpha,
         "projection": proj,
+        "liquidity": liq,
     }
 
 

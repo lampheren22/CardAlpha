@@ -84,6 +84,15 @@ class ProjectionResponse(BaseModel):
     risk_rating: str
 
 
+class LiquidityResponse(BaseModel):
+    liquidity_score: str
+    liquidity_numeric: int
+    avg_days_to_sell: Optional[float] = None
+    sales_per_week: Optional[float] = None
+    sales_30d: int = 0
+    buy_box: bool = False
+
+
 class CardResponse(CardBase):
     id: int
     created_at: datetime
@@ -96,6 +105,9 @@ class CardResponse(CardBase):
     estimated_roi: Optional[float] = None
     risk_rating: Optional[str] = None
     sell_through_rate: Optional[float] = None
+    liquidity_score: Optional[str] = None
+    liquidity_numeric: Optional[int] = None
+    reasoning: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -106,3 +118,4 @@ class CardDetailResponse(BaseModel):
     market_data: Optional[MarketDataResponse]
     alpha_score: Optional[AlphaScoreBreakdown]
     projection: Optional[ProjectionResponse]
+    liquidity: Optional[LiquidityResponse] = None
